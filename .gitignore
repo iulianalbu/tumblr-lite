@@ -1,0 +1,19 @@
+# Local Android configuration and secrets
+local.properties
+*.jks
+*.keystore
+secrets.properties
+oauth.properties
+
+# Gradle and Android build output
+.gradle/
+**/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
