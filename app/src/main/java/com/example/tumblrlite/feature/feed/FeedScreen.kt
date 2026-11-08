@@ -119,7 +119,7 @@ fun PhotoFeedContent(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 if (bannerLabel != null) {
-                    item(key = "sample-label", span = { StaggeredGridItemSpan.FullLine }) {
+                    item(key = "sample-label", span = StaggeredGridItemSpan.FullLine) {
                         Row(
                             Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -137,14 +137,14 @@ fun PhotoFeedContent(
                     }
                 }
                 if (posts.loadState.refresh is LoadState.Loading && posts.itemCount == 0) {
-                    item(key = "initial-loading", span = { StaggeredGridItemSpan.FullLine }) {
+                    item(key = "initial-loading", span = StaggeredGridItemSpan.FullLine) {
                         Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator()
                         }
                     }
                 }
                 (posts.loadState.refresh as? LoadState.Error)?.let { refreshError ->
-                    item(key = "refresh-error", span = { StaggeredGridItemSpan.FullLine }) {
+                    item(key = "refresh-error", span = StaggeredGridItemSpan.FullLine) {
                         Row(
                             Modifier.fillMaxWidth().padding(8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -164,7 +164,7 @@ fun PhotoFeedContent(
                         PhotoTile(post = post, onClick = { expandedPost = post })
                     }
                 }
-                item(key = "append-state", span = { StaggeredGridItemSpan.FullLine }) {
+                item(key = "append-state", span = StaggeredGridItemSpan.FullLine) {
                     when (val append = posts.loadState.append) {
                         is LoadState.Loading -> Box(
                             Modifier.fillMaxWidth().padding(18.dp),
