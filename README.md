@@ -32,7 +32,7 @@ Versions were checked against the official project release pages on November 8, 
 
 | Component | Version |
 | --- | --- |
-| Android Gradle Plugin | 9.5.0 |
+| Android Gradle Plugin | 9.5.1 |
 | Gradle | 9.6.0 |
 | Kotlin | 2.4.21 |
 | Compose BOM | 2026.09.00 |

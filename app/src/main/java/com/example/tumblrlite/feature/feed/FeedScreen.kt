@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.material3.Text
@@ -36,6 +37,7 @@ import com.example.tumblrlite.domain.model.FeedPost
 import com.example.tumblrlite.domain.model.PostKind
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun FeedScreen(onSignOut: () -> Unit, viewModel: FeedViewModel = hiltViewModel()) {
     val posts = viewModel.posts.collectAsLazyPagingItems()
     Column(Modifier.fillMaxSize()) {
