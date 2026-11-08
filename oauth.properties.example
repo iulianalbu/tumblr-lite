@@ -1,0 +1,6 @@
+# Copy to oauth.properties (already ignored by Git) and fill in locally.
+# Never paste real values into source, docs, CI settings, or test fixtures.
+consumerKey=
+consumerSecret=
+oauthToken=
+oauthTokenSecret=

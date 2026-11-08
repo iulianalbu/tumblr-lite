@@ -1,6 +1,6 @@
 # Tumblr Lite
 
-A small, read-only Android app prototype for a specialized Following feed. The current bootstrap has a working Compose login screen and a paged sample feed. It does **not** connect to Tumblr yet; the sample preview is labelled in the UI.
+A small, read-only Android app prototype for a specialized Following feed. It supports local OAuth 1.0a credentials for user info, followed blogs, and the documented Following dashboard feed. The paged sample feed remains available and is labelled in the UI.
 
 ## Requirements
 
@@ -8,21 +8,19 @@ A small, read-only Android app prototype for a specialized Following feed. The c
 - JDK 17
 - Gradle 9.6.0
 
-Open this folder in Android Studio, allow Gradle sync, then run the `app` configuration on an emulator or device. Or from a shell with Gradle installed:
+Open this folder in Android Studio, allow Gradle sync, then run the `app` configuration on an emulator or device. Or from PowerShell:
 
 ```powershell
-gradle :app:assembleDebug
-gradle :app:testDebugUnitTest
-gradle :app:connectedDebugAndroidTest
+.\gradlew.bat assembleDebug
+.\gradlew.bat testDebugUnitTest
+.\gradlew.bat installDebug
 ```
 
-The initial source drop has no Gradle wrapper because Gradle and a JDK 17/Android SDK are not installed in the authoring environment. Android Studio can import the project and generate a wrapper after the first sync.
-
-Select **Preview sample feed** to browse the local mock posts. **Continue with Tumblr** displays an explicit setup message; it does not open a fake login or claim authentication succeeded. See [docs/AUTH.md](docs/AUTH.md).
+The app opens directly to the live **Following** tab. **My Likes** loads liked photo posts from Tumblr; **For You** currently shows visibly labelled sample picks because Tumblr's documented API integration does not provide a personalized recommendation feed here. Copy `oauth.properties.example` to the ignored `oauth.properties` and fill in your existing OAuth 1.0a credentials to load Tumblr posts. If the live feed cannot load, Following offers the labelled mock sample as a development fallback. There is no browser login flow. Credentials are compiled into the APK and can be extracted from it, so keep the APK private. See [docs/AUTH.md](docs/AUTH.md).
 
 ## Architecture
 
-The project uses one `app` module with feature-based packages, Compose Material 3, MVVM, Hilt, StateFlow, and Paging 3. `FeedRepository` is the domain boundary. `FakeFeedRepository` currently backs it; the Retrofit `TumblrApi` interface is only an endpoint/DTO boundary and is not wired to credentials or networking.
+The project uses one `app` module with feature-based packages, Compose Material 3, MVVM, Hilt, StateFlow, Paging 3, Retrofit, Kotlin serialization, and an OkHttp OAuth signer. Account, dashboard, and likes API DTOs are mapped to immutable domain models. Following and My Likes use documented read-only Tumblr endpoints; For You is a labelled sample-picks view until a documented personalized source is available. Sample photos are not represented as authenticated Tumblr content.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 
@@ -39,8 +37,6 @@ Versions were checked against the official project release pages on November 8, 
 | Hilt | 2.60.1 |
 | Paging | 3.5.3 |
 | Retrofit | 3.0.0 |
-| OkHttp | 5.5.1 |
 | Kotlinx Serialization | 1.12.0 |
 | Coroutines | 1.11.0 |
-| DataStore | 1.2.1 |
 | Coil | 3.6.3 |
