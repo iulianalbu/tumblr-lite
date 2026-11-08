@@ -14,6 +14,7 @@ fun LikesScreen(modifier: Modifier = Modifier, viewModel: LikesViewModel = hiltV
         posts = viewModel.likedPosts.collectAsLazyPagingItems(),
         modifier = modifier.statusBarsPadding().fillMaxSize(),
         listBottomPadding = 124.dp,
+        isLikesFeed = true,
     )
 }
 

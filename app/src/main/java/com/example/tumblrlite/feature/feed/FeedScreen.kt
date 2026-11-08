@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,12 +18,15 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,9 +37,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -79,6 +81,7 @@ fun FeedScreen(
         bannerActionLabel = if (isLiveFollowingFeed) null else "Live feed",
         onBannerAction = if (isLiveFollowingFeed) null else onReturnToLive,
         onOpenSample = if (isLiveFollowingFeed) onOpenSample else null,
+        isFollowingFeed = isLiveFollowingFeed,
     )
 }
 
@@ -92,8 +95,12 @@ fun PhotoFeedContent(
     bannerActionLabel: String? = null,
     onBannerAction: (() -> Unit)? = null,
     onOpenSample: (() -> Unit)? = null,
+    isFollowingFeed: Boolean = false,
+    isLikesFeed: Boolean = false,
 ) {
     var expandedPost by remember { mutableStateOf<FeedPost?>(null) }
+    val likedOverrides = remember { mutableStateMapOf<String, Boolean>() }
+    val followedOverrides = remember { mutableStateMapOf<String, Boolean>() }
 
     PullToRefreshBox(
         isRefreshing = posts.loadState.refresh is LoadState.Loading && posts.itemCount > 0,
@@ -186,7 +193,21 @@ fun PhotoFeedContent(
     }
 
     expandedPost?.let { post ->
-        PhotoDetailDialog(post = post, onDismiss = { expandedPost = null })
+        val initiallyLiked = isLikesFeed
+        val isLiked = likedOverrides[post.id] ?: initiallyLiked
+        PhotoDetailDialog(
+            post = post,
+            isLiked = isLiked,
+            isBlogFollowed = { name ->
+                followedOverrides[name] ?: (isFollowingFeed && name == post.blogName)
+            },
+            onToggleLike = { likedOverrides[post.id] = !isLiked },
+            onToggleFollow = { name ->
+                val currentlyFollowed = followedOverrides[name] ?: (isFollowingFeed && name == post.blogName)
+                followedOverrides[name] = !currentlyFollowed
+            },
+            onDismiss = { expandedPost = null },
+        )
     }
 }
 
@@ -220,9 +241,14 @@ private fun PhotoTile(post: FeedPost, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PhotoDetailDialog(post: FeedPost, onDismiss: () -> Unit) {
-    var loved by rememberSaveable(post.id) { mutableStateOf(false) }
-
+private fun PhotoDetailDialog(
+    post: FeedPost,
+    isLiked: Boolean,
+    isBlogFollowed: (String) -> Boolean,
+    onToggleLike: () -> Unit,
+    onToggleFollow: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -232,7 +258,7 @@ private fun PhotoDetailDialog(post: FeedPost, onDismiss: () -> Unit) {
                 model = post.mediaUrl,
                 contentDescription = post.mediaDescription,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
             )
 
             IconButton(
@@ -242,7 +268,7 @@ private fun PhotoDetailDialog(post: FeedPost, onDismiss: () -> Unit) {
                 Icon(Icons.Filled.Close, contentDescription = "Close photo", tint = Color.White)
             }
 
-            Column(
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -252,46 +278,64 @@ private fun PhotoDetailDialog(post: FeedPost, onDismiss: () -> Unit) {
                         ),
                     )
                     .navigationBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp, top = 44.dp, bottom = 12.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { loved = !loved }, modifier = Modifier.size(44.dp)) {
+                IconButton(onClick = onToggleLike, modifier = Modifier.size(40.dp)) {
                     Icon(
                         Icons.Filled.Favorite,
-                        contentDescription = if (loved) "Remove love" else "Love post",
-                        tint = if (loved) Color(0xFFFF5C8A) else Color.White,
+                        contentDescription = if (isLiked) "Remove love" else "Love post",
+                        tint = if (isLiked) Color(0xFFDC143C) else Color.White,
                     )
                 }
-                Spacer(Modifier.height(4.dp))
-                BlogAttribution(post.id, post.blogName, "Posted by")
+                Icon(Icons.Filled.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Text(
+                    text = post.blogName,
+                    modifier = Modifier.weight(1f, fill = false),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+                BlogFollowIcon(post.blogName, isBlogFollowed(post.blogName)) {
+                    onToggleFollow(post.blogName)
+                }
                 post.rebloggedFromName
                     ?.takeIf { it.isNotBlank() && it != post.blogName }
-                    ?.let { BlogAttribution(post.id, it, "Reblogged from") }
+                    ?.let { source ->
+                        Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = Color.White.copy(alpha = 0.72f), modifier = Modifier.size(14.dp))
+                        Text(
+                            text = source,
+                            modifier = Modifier.weight(1f, fill = false),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.86f),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
+                        BlogFollowIcon(source, isBlogFollowed(source)) { onToggleFollow(source) }
+                    }
             }
         }
     }
 }
 
 @Composable
-private fun BlogAttribution(postId: String, blogName: String, prefix: String) {
-    var followed by rememberSaveable(postId, blogName) { mutableStateOf(false) }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+private fun BlogFollowIcon(blogName: String, isFollowed: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClickLabel = if (isFollowed) "Unfollow $blogName" else "Follow $blogName", onClick = onClick)
+            .semantics { contentDescription = if (isFollowed) "Following $blogName" else "Follow $blogName" },
+        contentAlignment = Alignment.Center,
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(prefix, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.72f))
-            Text(blogName, style = MaterialTheme.typography.bodyMedium, color = Color.White)
-        }
-        IconButton(
-            onClick = { followed = !followed },
-            modifier = Modifier.size(36.dp),
-        ) {
-            Icon(
-                imageVector = if (followed) Icons.Filled.Check else Icons.Filled.Add,
-                contentDescription = if (followed) "Following $blogName" else "Follow $blogName",
-                tint = Color.White,
-            )
-        }
+        Icon(
+            imageVector = if (isFollowed) Icons.Filled.Check else Icons.Filled.Add,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(18.dp),
+        )
     }
 }
 
